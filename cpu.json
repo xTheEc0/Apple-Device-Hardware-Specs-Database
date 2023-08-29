@@ -1,0 +1,23 @@
+{
+  "s5l8930": "Apple A4",
+  "s5l8940": "Apple A5 (APL0498)",
+  "s5l8942": "Apple A5 (APL2498)",
+  "s5l8947": "Apple A5 (APL7498)",
+  "s5l8945": "Apple A5X",
+  "s5l8955": "Apple A6X",
+  "s5l8965": "Apple A7 (APL5698)",
+  "t7000": "Apple A8",
+  "t7001": "Apple A8X",
+  "s8000": "Apple A9 (Samsung)",
+  "s8003": "Apple A9 (TSMC)",
+  "s8001": "Apple A9X",
+  "t8010": "Apple A10 Fusion",
+  "t8011": "Apple A10X Fusion",
+  "t8015": "Apple A11 Bionic",
+  "t8020": "Apple A12 Bionic",
+  "t8027": "Apple A12X Bionic",
+  "t8030": "Apple A13 Bionic",
+  "t8101": "Apple A14 Bionic",
+  "t8110": "Apple A15 Bionic",
+  "t8120": "Apple A16 Bionic"
+}
