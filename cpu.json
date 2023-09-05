@@ -4,9 +4,13 @@
   "s5l8942": "Apple A5 (APL2498)",
   "s5l8947": "Apple A5 (APL7498)",
   "s5l8945": "Apple A5X",
+  "s5l8950": "Apple A6",
   "s5l8955": "Apple A6X",
   "s5l8960x": "Apple A7 (S5L8960)",
   "s5l8965": "Apple A7 (APL5698)",
+  "t6000": "Apple M1 Pro",
+  "t6001": "Apple M1 Max",
+  "t6002": "Apple M1 Ultra",
   "t7000": "Apple A8",
   "t7001": "Apple A8X",
   "s8000": "Apple A9 (Samsung)",
@@ -21,5 +25,6 @@
   "t8101": "Apple A14 Bionic",
   "t8103": "Apple M1",
   "t8110": "Apple A15 Bionic",
+  "t8112": "Apple M2",
   "t8120": "Apple A16 Bionic"
 }
