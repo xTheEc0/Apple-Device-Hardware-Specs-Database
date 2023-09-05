@@ -136,5 +136,13 @@
   "iPad14,3": "iPad Pro 11 inch 4th Gen",
   "iPad14,4": "iPad Pro 11 inch 4th Gen",
   "iPad14,5": "iPad Pro 12.9 inch 6th Gen",
-  "iPad14,6": "iPad Pro 12.9 inch 6th Gen"
+  "iPad14,6": "iPad Pro 12.9 inch 6th Gen",
+  "AppleTV1,1": "Apple TV 1st Gen",
+  "AppleTV2,1": "Apple TV 2nd Gen",
+  "AppleTV3,1": "Apple TV 3rd Gen (Early 2012)",
+  "AppleTV3,2": "Apple TV 3rd Gen (Early 2013)",
+  "AppleTV5,3": "Apple TV 4th Gen",
+  "AppleTV6,2": "Apple TV 4K 1st Gen",
+  "AppleTV11,1": "Apple TV 4K 2nd Gen",
+  "AppleTV14,1": "Apple TV 4K 3rd Gen"
 }
