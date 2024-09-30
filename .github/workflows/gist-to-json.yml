@@ -74,5 +74,4 @@ jobs: # Define the jobs that make up the workflow
         with:
           commit_message: 'Update device list'
           file_pattern: sanitized_output.json
-          # Use the correct secret name here:
-          token: ${{ secrets.GIST_UPDATE_TOKEN }}  
+          # No need for a separate token input here! 
