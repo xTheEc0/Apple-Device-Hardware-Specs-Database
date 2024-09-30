@@ -57,7 +57,7 @@ jobs: # Define the jobs that make up the workflow
       - name: Run sanitization script 
         if: steps.cache-timestamp.outputs.cache-hit != 'true' 
         # ^- Only run this step IF there's no cache hit
-        run: python sanitize.py https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt output.json
+        run: python sanitize.py https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt sanitized_output.json
         # ^- Execute the Python script:
         #   - Pass the gist URL and output filename as arguments
 
@@ -69,10 +69,10 @@ jobs: # Define the jobs that make up the workflow
         #   - This file is then cached in the previous "Cache last update date" step
 
       - name: Commit changes
-        if: steps.cache-timestamp.outputs.cache-hit != 'true' 
-        # ^- Only commit if there were changes (no cache hit)
-        uses: stefanzweifel/git-auto-commit-action@v4 
-        # ^- Use the auto-commit action to commit the changes
+        if: steps.cache-timestamp.outputs.cache-hit != 'true'
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: 'Update device list' 
-          file_pattern: output.json # Commit only the 'output.json' file 
+          commit_message: 'Update device list'
+          file_pattern: sanitized_output.json
+          # Use the correct secret name here:
+          token: ${{ secrets.GIST_UPDATE_TOKEN }}  
