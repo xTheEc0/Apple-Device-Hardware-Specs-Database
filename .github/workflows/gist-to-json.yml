@@ -9,6 +9,8 @@ on:
 jobs: # Define the jobs that make up the workflow
   sanitize-and-update: # Name of this job
     runs-on: ubuntu-latest  # Use the latest Ubuntu runner to execute the job
+    permissions:  # Grant write access to the GITHUB_TOKEN
+      contents: write
 
     # Define the steps of the job
     steps:
@@ -70,9 +72,7 @@ jobs: # Define the jobs that make up the workflow
 
       - name: Commit changes
         if: steps.cache-timestamp.outputs.cache-hit != 'true'
-        uses: stefanzweifel/git-auto-commit-action@v4
-        env: # Access environment variables here
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        uses: stefanzweifel/git-auto-commit-action@v4 
         with:
           commit_message: 'Update device list'
           file_pattern: sanitized_output.json
