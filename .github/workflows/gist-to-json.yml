@@ -1,74 +1,75 @@
-name: Gist to JSON  
+name: Gist to JSON
 
 # Define when the workflow should run
 on:
   schedule:
-    - cron: '0 0 * * *' 
-  workflow_dispatch: 
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
-jobs: 
-  sanitize-and-update: 
-    runs-on: ubuntu-latest 
-    permissions: 
+jobs:
+  sanitize-and-update:
+    runs-on: ubuntu-latest
+    permissions:
       contents: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3 
+        uses: actions/checkout@v3
 
       - name: Get gist last activity date
         id: gist-last-activity
         run: |
           GIST_REVISIONS_URL="https://gist.github.com/adamawolf/3048717/revisions"
-          LAST_ACTIVITY_DATE=$(curl -s "$GIST_REVISIONS_URL" | grep -oE 'datetime="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"' | head -n 2 | tail -n 1 | cut -d '"' -f 2 | cut -c 1-10 | tr -d '-')
+          LAST_ACTIVITY_DATE=$(curl -s "$GIST_REVISIONS_URL" | grep -oE 'datetime="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"' | head -n 1 | cut -d '"' -f 2 | cut -c 1-10)
+          echo "LAST_ACTIVITY_DATE=${LAST_ACTIVITY_DATE}" >> $GITHUB_ENV
 
-      - name: Restore cached last activity date
+      - name: Restore cache
+        id: cache-check
         uses: actions/cache@v3
-        id: cache-timestamp
         with:
-          path: last-activity-date.txt
-          key: ${{ runner.os }}-gist-last-activity-date 
+          path: last-activity-date
+          key: gist-last-activity-date-${{ runner.os }}
 
       - name: Check if gist has been updated
         id: gist-updated
         run: |
-          CACHED_DATE=$(cat last-activity-date.txt)
-          echo "CACHED_DATE=${CACHED_DATE}" >> $GITHUB_ENV
-
-          if [[ "$CACHED_DATE" != "$LAST_ACTIVITY_DATE" ]]; then
-            echo "Gist has been updated."
-            echo "GIST_UPDATED=true" >> $GITHUB_ENV
-          else
-            echo "Gist has not been updated."
-            echo "GIST_UPDATED=false" >> $GITHUB_ENV
+          if [[ -f last-activity-date ]]; then
+            CACHED_DATE=$(cat last-activity-date)
+            if [[ "$CACHED_DATE" == "$LAST_ACTIVITY_DATE" ]]; then
+              echo "GIST_UPDATED=false" >> $GITHUB_ENV
+              exit 0
+            fi
           fi
+          echo "GIST_UPDATED=true" >> $GITHUB_ENV
 
       - name: Setup Python
-        # Use the correct condition:
-        if: steps.gist-updated.outputs.GIST_UPDATED == 'true' 
+        if: env.GIST_UPDATED == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      - name: Install requests
-        # Use the correct condition:
-        if: steps.gist-updated.outputs.GIST_UPDATED == 'true' 
-        run: pip install requests 
+      - name: Install dependencies
+        if: env.GIST_UPDATED == 'true'
+        run: pip install requests
 
-      - name: Run sanitization script 
-        # Use the correct condition:
-        if: steps.gist-updated.outputs.GIST_UPDATED == 'true' 
+      - name: Run sanitization script
+        if: env.GIST_UPDATED == 'true'
         run: python sanitize.py https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt sanitized_output.json
 
-      - name: Save last update date to cache
-        # Use the correct condition and variable:
-        if: steps.gist-updated.outputs.GIST_UPDATED == 'true' 
-        run: echo "${{ env.LAST_ACTIVITY_DATE }}" > last-activity-date.txt
+      - name: Save last update date to file
+        if: env.GIST_UPDATED == 'true'
+        run: echo "${{ env.LAST_ACTIVITY_DATE }}" > last-activity-date
+
+      - name: Update cache
+        if: env.GIST_UPDATED == 'true'
+        uses: actions/cache@v3
+        with:
+          path: last-activity-date
+          key: gist-last-activity-date-${{ runner.os }}
 
       - name: Commit changes
-        # Use the correct condition:
-        if: steps.gist-updated.outputs.GIST_UPDATED == 'true' 
-        uses: stefanzweifel/git-auto-commit-action@v4 
+        if: env.GIST_UPDATED == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: 'Update device list'
           file_pattern: sanitized_output.json
