@@ -3,7 +3,7 @@ name: Gist to JSON
 # Define when the workflow should run
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 6 * * 1' # Runs every Monday at 6:00 AM UTC (9:00 AM GMT+3)
   workflow_dispatch:
 
 jobs:
