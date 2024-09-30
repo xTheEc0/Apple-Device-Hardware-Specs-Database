@@ -19,17 +19,13 @@ jobs: # Define the jobs that make up the workflow
         # ^ Use the checkout action to get the repository's code 
         #   so that the script can access and modify files.
 
-      - name: Get gist last modified date
-        id: gist-modified  # Give this step an ID for later reference
-        run: | # Use '|' to write multiline commands
-          echo "LAST_MODIFIED=$(curl -s -I https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt | grep -i Last-Modified | awk '{print $2}')" >> $GITHUB_ENV
-          # ^- Use curl to get the headers of the gist
-          #   - -s: Silent mode (no progress bar)
-          #   - -I: Fetch headers only
-          #   - Pipe (|) the output to:
-          #     - grep -i Last-Modified: Find the line with "Last-Modified"
-          #     - awk '{print $2}': Extract the date value from that line
-          #   - Store the date in the LAST_MODIFIED environment variable
+      - name: Get gist updated_at timestamp
+        id: gist-updated-at
+        run: |
+          GIST_ID=adamawolf/3048717  # Extract gist ID (username/ID)
+          UPDATED_AT=$(curl -s -H "Accept: application/vnd.github+json" https://api.github.com/gists/${GIST_ID} | jq -r '.updated_at')
+          echo "LAST_UPDATED=${UPDATED_AT}" >> $GITHUB_ENV
+          echo "CACHE_DATE=$(echo $LAST_UPDATED | cut -c 1-10 | tr -d '-')" >> $GITHUB_ENV # YYYY-MM-DD to YYYYMMDD
 
       - name: Restore cached last modified date 
         uses: actions/cache@v3
