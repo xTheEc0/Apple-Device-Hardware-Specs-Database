@@ -1,69 +1,73 @@
-name: Gist to JSON  # Name of the workflow
+name: Gist to JSON  
 
 # Define when the workflow should run
 on:
-  schedule:  # Schedule the workflow to run on a cron schedule
-    - cron: '0 0 * * *' # Run daily at 00:00 UTC (midnight)
-  workflow_dispatch:  # Allow manually triggering the workflow
+  schedule:
+    - cron: '0 0 * * *' 
+  workflow_dispatch: 
 
-jobs: # Define the jobs that make up the workflow
-  sanitize-and-update: # Name of this job
-    runs-on: ubuntu-latest  # Use the latest Ubuntu runner to execute the job
-    permissions:  # Grant write access to the GITHUB_TOKEN
+jobs: 
+  sanitize-and-update: 
+    runs-on: ubuntu-latest 
+    permissions: 
       contents: write
 
-    # Define the steps of the job
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3 
-        # ^ Use the checkout action to get the repository's code 
-        #   so that the script can access and modify files.
 
       - name: Get gist last activity date
         id: gist-last-activity
         run: |
           GIST_REVISIONS_URL="https://gist.github.com/adamawolf/3048717/revisions"
-          LAST_ACTIVITY_DATE=$(curl -s "$GIST_REVISIONS_URL" | grep -oE 'datetime="[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n 2 | tail -n 1 | cut -d '"' -f 2)
-          echo "LAST_ACTIVITY_DATE=${LAST_ACTIVITY_DATE}" >> $GITHUB_ENV
-          CACHE_DATE=$(echo $LAST_ACTIVITY_DATE | tr -d '-') 
-          echo "CACHE_DATE=${CACHE_DATE}" >> $GITHUB_ENV
+          LAST_ACTIVITY_DATE=$(curl -s "$GIST_REVISIONS_URL" | grep -oE 'datetime="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"' | head -n 2 | tail -n 1 | cut -d '"' -f 2 | cut -c 1-10 | tr -d '-')
 
       - name: Restore cached last activity date
         uses: actions/cache@v3
         id: cache-timestamp
         with:
-          path: sanitized_output.json # Cache the generated JSON file!
-          key: ${{ runner.os }}-gist-${{ env.CACHE_DATE }} 
+          path: last-activity-date.txt
+          key: ${{ runner.os }}-gist-last-activity-date 
+
+      - name: Check if gist has been updated
+        id: gist-updated
+        run: |
+          CACHED_DATE=$(cat last-activity-date.txt)
+          echo "CACHED_DATE=${CACHED_DATE}" >> $GITHUB_ENV
+
+          if [[ "$CACHED_DATE" != "$LAST_ACTIVITY_DATE" ]]; then
+            echo "Gist has been updated."
+            echo "GIST_UPDATED=true" >> $GITHUB_ENV
+          else
+            echo "Gist has not been updated."
+            echo "GIST_UPDATED=false" >> $GITHUB_ENV
+          fi
 
       - name: Setup Python
-        if: steps.cache-timestamp.outputs.cache-hit != 'true' 
-        # ^- Only run this step IF there's no cache hit (i.e., gist updated)
+        # Use the correct condition:
+        if: steps.gist-updated.outputs.GIST_UPDATED == 'true' 
         uses: actions/setup-python@v4
-        # ^- Use the setup-python action to set up a Python environment
         with:
-          python-version: '3.x' # Use Python 3
+          python-version: '3.x'
 
       - name: Install requests
-        if: steps.cache-timestamp.outputs.cache-hit != 'true' 
-        # ^- Only run this step IF there's no cache hit
+        # Use the correct condition:
+        if: steps.gist-updated.outputs.GIST_UPDATED == 'true' 
         run: pip install requests 
-        # ^- Install the 'requests' library to make HTTP requests
 
       - name: Run sanitization script 
-        if: steps.cache-timestamp.outputs.cache-hit != 'true' 
-        # ^- Only run this step IF there's no cache hit
+        # Use the correct condition:
+        if: steps.gist-updated.outputs.GIST_UPDATED == 'true' 
         run: python sanitize.py https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt sanitized_output.json
-        # ^- Execute the Python script:
-        #   - Pass the gist URL and output filename as arguments
 
-      - name: Save last update date
-        # Remove the 'if' condition:
-        # if: steps.cache-timestamp.outputs.cache-hit != 'true' 
-        run: echo "${{ env.LAST_MODIFIED }}" > last_updated.txt
-        # ^- This will update the cache key on every run
+      - name: Save last update date to cache
+        # Use the correct condition and variable:
+        if: steps.gist-updated.outputs.GIST_UPDATED == 'true' 
+        run: echo "${{ env.LAST_ACTIVITY_DATE }}" > last-activity-date.txt
 
       - name: Commit changes
-        if: steps.cache-timestamp.outputs.cache-hit != 'true'
+        # Use the correct condition:
+        if: steps.gist-updated.outputs.GIST_UPDATED == 'true' 
         uses: stefanzweifel/git-auto-commit-action@v4 
         with:
           commit_message: 'Update device list'
