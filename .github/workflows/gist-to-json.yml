@@ -31,16 +31,12 @@ jobs: # Define the jobs that make up the workflow
           #     - awk '{print $2}': Extract the date value from that line
           #   - Store the date in the LAST_MODIFIED environment variable
 
-      - name: Cache last update date
-        uses: actions/cache@v3 # Use the cache action to speed up runs
-        id: cache-timestamp # Give this step an ID
+      - name: Restore cached last modified date 
+        uses: actions/cache@v3
+        id: cache-timestamp
         with:
-          path: |
-            last_updated.txt # Cache this file
-          key: ${{ runner.os }}-gist-${{ env.LAST_MODIFIED }} 
-          # ^- Cache key (unique identifier for the cache):
-          #   - Use runner OS, "gist" literal, and the LAST_MODIFIED date
-          #   - This creates a new cache when the date changes
+          path: last-modified-date.txt  # Dummy path (not used)
+          key: ${{ runner.os }}-gist-${{ env.LAST_MODIFIED }}
 
       - name: Setup Python
         if: steps.cache-timestamp.outputs.cache-hit != 'true' 
@@ -64,11 +60,10 @@ jobs: # Define the jobs that make up the workflow
         #   - Pass the gist URL and output filename as arguments
 
       - name: Save last update date
-        if: steps.cache-timestamp.outputs.cache-hit != 'true' 
-        # ^- Only run this step IF there's no cache hit
+        # Remove the 'if' condition:
+        # if: steps.cache-timestamp.outputs.cache-hit != 'true' 
         run: echo "${{ env.LAST_MODIFIED }}" > last_updated.txt
-        # ^- Save the LAST_MODIFIED date to the 'last_updated.txt' file
-        #   - This file is then cached in the previous "Cache last update date" step
+        # ^- This will update the cache key on every run
 
       - name: Commit changes
         if: steps.cache-timestamp.outputs.cache-hit != 'true'
