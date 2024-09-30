@@ -15,7 +15,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        run: echo "Checking out the repository."
 
       - name: Get gist last activity date
         id: gist-last-activity
@@ -57,13 +56,20 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-        run: echo "Setting up Python."
+
+      - name: Log Python Setup
+        if: env.GIST_UPDATED == 'true'
+        run: echo "Python setup complete."
 
       - name: Install dependencies
         if: env.GIST_UPDATED == 'true'
         run: |
           echo "Installing Python dependencies..."
           pip install requests
+
+      - name: Log Dependencies Installed
+        if: env.GIST_UPDATED == 'true'
+        run: echo "Dependencies installed."
 
       - name: Run sanitization script
         if: env.GIST_UPDATED == 'true'
@@ -83,7 +89,10 @@ jobs:
         with:
           path: last-activity-date
           key: gist-last-activity-date-${{ runner.os }}
-        run: echo "Updating the cache with the new date."
+
+      - name: Cache update complete
+        if: env.GIST_UPDATED == 'true'
+        run: echo "Cache updated with the new date."
 
       - name: Commit changes
         if: env.GIST_UPDATED == 'true'
@@ -91,4 +100,7 @@ jobs:
         with:
           commit_message: 'Update device list'
           file_pattern: sanitized_output.json
-        run: echo "Committing the updated JSON file."
+
+      - name: Log Commit
+        if: env.GIST_UPDATED == 'true'
+        run: echo "Commit completed."
