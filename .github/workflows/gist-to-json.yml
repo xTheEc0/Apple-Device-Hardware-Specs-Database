@@ -28,12 +28,12 @@ jobs: # Define the jobs that make up the workflow
           CACHE_DATE=$(echo $LAST_ACTIVITY_DATE | tr -d '-') 
           echo "CACHE_DATE=${CACHE_DATE}" >> $GITHUB_ENV
 
-      - name: Restore cached last modified date 
+      - name: Restore cached last activity date
         uses: actions/cache@v3
         id: cache-timestamp
         with:
-          path: last-modified-date.txt  # Dummy path (not used)
-          key: ${{ runner.os }}-gist-${{ env.LAST_MODIFIED }}
+          path: sanitized_output.json # Cache the generated JSON file!
+          key: ${{ runner.os }}-gist-${{ env.CACHE_DATE }} 
 
       - name: Setup Python
         if: steps.cache-timestamp.outputs.cache-hit != 'true' 
