@@ -15,13 +15,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        run: echo "Checking out the repository."
 
       - name: Get gist last activity date
         id: gist-last-activity
         run: |
+          echo "Fetching the last activity date of the Gist..."
           GIST_REVISIONS_URL="https://gist.github.com/adamawolf/3048717/revisions"
           LAST_ACTIVITY_DATE=$(curl -s "$GIST_REVISIONS_URL" | grep -oE 'datetime="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"' | head -n 1 | cut -d '"' -f 2 | cut -c 1-10)
           echo "LAST_ACTIVITY_DATE=${LAST_ACTIVITY_DATE}" >> $GITHUB_ENV
+          echo "Last activity date for the Gist: $LAST_ACTIVITY_DATE"
 
       - name: Restore cache
         id: cache-check
@@ -33,13 +36,20 @@ jobs:
       - name: Check if gist has been updated
         id: gist-updated
         run: |
+          echo "Checking if the Gist has been updated..."
           if [[ -f last-activity-date ]]; then
+            echo "Cache found. Loading cached date..."
             CACHED_DATE=$(cat last-activity-date)
+            echo "Cached date: $CACHED_DATE"
             if [[ "$CACHED_DATE" == "$LAST_ACTIVITY_DATE" ]]; then
+              echo "No updates found in the Gist. Skipping the update process."
               echo "GIST_UPDATED=false" >> $GITHUB_ENV
               exit 0
             fi
+          else
+            echo "No cache found. Proceeding with the update process."
           fi
+          echo "Updates found in the Gist. Proceeding with the update process."
           echo "GIST_UPDATED=true" >> $GITHUB_ENV
 
       - name: Setup Python
@@ -47,18 +57,25 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
+        run: echo "Setting up Python."
 
       - name: Install dependencies
         if: env.GIST_UPDATED == 'true'
-        run: pip install requests
+        run: |
+          echo "Installing Python dependencies..."
+          pip install requests
 
       - name: Run sanitization script
         if: env.GIST_UPDATED == 'true'
-        run: python sanitize.py https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt sanitized_output.json
+        run: |
+          echo "Running sanitization script..."
+          python sanitize.py https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt sanitized_output.json
 
       - name: Save last update date to file
         if: env.GIST_UPDATED == 'true'
-        run: echo "${{ env.LAST_ACTIVITY_DATE }}" > last-activity-date
+        run: |
+          echo "Saving the last update date to cache..."
+          echo "${{ env.LAST_ACTIVITY_DATE }}" > last-activity-date
 
       - name: Update cache
         if: env.GIST_UPDATED == 'true'
@@ -66,6 +83,7 @@ jobs:
         with:
           path: last-activity-date
           key: gist-last-activity-date-${{ runner.os }}
+        run: echo "Updating the cache with the new date."
 
       - name: Commit changes
         if: env.GIST_UPDATED == 'true'
@@ -73,3 +91,4 @@ jobs:
         with:
           commit_message: 'Update device list'
           file_pattern: sanitized_output.json
+        run: echo "Committing the updated JSON file."
