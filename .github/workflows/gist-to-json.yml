@@ -19,13 +19,14 @@ jobs: # Define the jobs that make up the workflow
         # ^ Use the checkout action to get the repository's code 
         #   so that the script can access and modify files.
 
-      - name: Get gist updated_at timestamp
-        id: gist-updated-at
+      - name: Get gist last activity date
+        id: gist-last-activity
         run: |
-          GIST_ID=adamawolf/3048717  # Extract gist ID (username/ID)
-          UPDATED_AT=$(curl -s -H "Accept: application/vnd.github+json" https://api.github.com/gists/${GIST_ID} | jq -r '.updated_at')
-          echo "LAST_UPDATED=${UPDATED_AT}" >> $GITHUB_ENV
-          echo "CACHE_DATE=$(echo $LAST_UPDATED | cut -c 1-10 | tr -d '-')" >> $GITHUB_ENV # YYYY-MM-DD to YYYYMMDD
+          GIST_REVISIONS_URL="https://gist.github.com/adamawolf/3048717/revisions"
+          LAST_ACTIVITY_DATE=$(curl -s "$GIST_REVISIONS_URL" | grep -oE 'datetime="[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -n 2 | tail -n 1 | cut -d '"' -f 2)
+          echo "LAST_ACTIVITY_DATE=${LAST_ACTIVITY_DATE}" >> $GITHUB_ENV
+          CACHE_DATE=$(echo $LAST_ACTIVITY_DATE | tr -d '-') 
+          echo "CACHE_DATE=${CACHE_DATE}" >> $GITHUB_ENV
 
       - name: Restore cached last modified date 
         uses: actions/cache@v3
