@@ -1,0 +1,55 @@
+name: Gist to JSON
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  sanitize-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get gist last modified date
+        id: gist-modified
+        uses: actions/http-client@v2
+        with:
+          url: https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt
+          method: HEAD
+        env:
+          ACCEPT: application/vnd.github.v3+json
+
+      - name: Cache last update date
+        uses: actions/cache@v3
+        id: cache-timestamp
+        with:
+          path: |
+            last_updated.txt
+          key: ${{ runner.os }}-gist-${{ steps.gist-modified.response.headers.last-modified }}
+
+      - name: Setup Python
+        if: steps.cache-timestamp.outputs.cache-hit != 'true' # Only run if no cache
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install requests
+        if: steps.cache-timestamp.outputs.cache-hit != 'true' # Only run if no cache
+        run: pip install requests
+
+      - name: Run sanitization script 
+        if: steps.cache-timestamp.outputs.cache-hit != 'true' # Only run if no cache
+        run: python sanitize.py https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt sanitized_output.json
+
+      - name: Save last update date
+        if: steps.cache-timestamp.outputs.cache-hit != 'true' # Only run if no cache
+        run: echo "${{ steps.gist-modified.response.headers.last-modified }}" > last_updated.txt
+
+      - name: Commit changes
+        if: steps.cache-timestamp.outputs.cache-hit != 'true' # Only commit if there are changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: 'Update device list'
+          file_pattern: output.json
