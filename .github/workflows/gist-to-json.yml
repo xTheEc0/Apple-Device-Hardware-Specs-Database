@@ -1,55 +1,78 @@
-name: Gist to JSON
+name: Gist to JSON  # Name of the workflow
 
+# Define when the workflow should run
 on:
-  schedule:
-    - cron: '0 0 * * *'
-  workflow_dispatch:
+  schedule:  # Schedule the workflow to run on a cron schedule
+    - cron: '0 0 * * *' # Run daily at 00:00 UTC (midnight)
+  workflow_dispatch:  # Allow manually triggering the workflow
 
-jobs:
-  sanitize-and-update:
-    runs-on: ubuntu-latest
+jobs: # Define the jobs that make up the workflow
+  sanitize-and-update: # Name of this job
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner to execute the job
+
+    # Define the steps of the job
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3 
+        # ^ Use the checkout action to get the repository's code 
+        #   so that the script can access and modify files.
 
       - name: Get gist last modified date
-        id: gist-modified
-        uses: actions/http-client@v2
-        with:
-          url: https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt
-          method: HEAD
-        env:
-          ACCEPT: application/vnd.github.v3+json
+        id: gist-modified  # Give this step an ID for later reference
+        run: | # Use '|' to write multiline commands
+          echo "LAST_MODIFIED=$(curl -s -I https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt | grep -i Last-Modified | awk '{print $2}')" >> $GITHUB_ENV
+          # ^- Use curl to get the headers of the gist
+          #   - -s: Silent mode (no progress bar)
+          #   - -I: Fetch headers only
+          #   - Pipe (|) the output to:
+          #     - grep -i Last-Modified: Find the line with "Last-Modified"
+          #     - awk '{print $2}': Extract the date value from that line
+          #   - Store the date in the LAST_MODIFIED environment variable
 
       - name: Cache last update date
-        uses: actions/cache@v3
-        id: cache-timestamp
+        uses: actions/cache@v3 # Use the cache action to speed up runs
+        id: cache-timestamp # Give this step an ID
         with:
           path: |
-            last_updated.txt
-          key: ${{ runner.os }}-gist-${{ steps.gist-modified.response.headers.last-modified }}
+            last_updated.txt # Cache this file
+          key: ${{ runner.os }}-gist-${{ env.LAST_MODIFIED }} 
+          # ^- Cache key (unique identifier for the cache):
+          #   - Use runner OS, "gist" literal, and the LAST_MODIFIED date
+          #   - This creates a new cache when the date changes
 
       - name: Setup Python
-        if: steps.cache-timestamp.outputs.cache-hit != 'true' # Only run if no cache
+        if: steps.cache-timestamp.outputs.cache-hit != 'true' 
+        # ^- Only run this step IF there's no cache hit (i.e., gist updated)
         uses: actions/setup-python@v4
+        # ^- Use the setup-python action to set up a Python environment
         with:
-          python-version: '3.x'
+          python-version: '3.x' # Use Python 3
 
       - name: Install requests
-        if: steps.cache-timestamp.outputs.cache-hit != 'true' # Only run if no cache
-        run: pip install requests
+        if: steps.cache-timestamp.outputs.cache-hit != 'true' 
+        # ^- Only run this step IF there's no cache hit
+        run: pip install requests 
+        # ^- Install the 'requests' library to make HTTP requests
 
       - name: Run sanitization script 
-        if: steps.cache-timestamp.outputs.cache-hit != 'true' # Only run if no cache
-        run: python sanitize.py https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt sanitized_output.json
+        if: steps.cache-timestamp.outputs.cache-hit != 'true' 
+        # ^- Only run this step IF there's no cache hit
+        run: python sanitize.py https://gist.githubusercontent.com/adamawolf/3048717/raw/bd838e3254565a8da730873667e5d39902fffe6e/Apple_mobile_device_types.txt output.json
+        # ^- Execute the Python script:
+        #   - Pass the gist URL and output filename as arguments
 
       - name: Save last update date
-        if: steps.cache-timestamp.outputs.cache-hit != 'true' # Only run if no cache
-        run: echo "${{ steps.gist-modified.response.headers.last-modified }}" > last_updated.txt
+        if: steps.cache-timestamp.outputs.cache-hit != 'true' 
+        # ^- Only run this step IF there's no cache hit
+        run: echo "${{ env.LAST_MODIFIED }}" > last_updated.txt
+        # ^- Save the LAST_MODIFIED date to the 'last_updated.txt' file
+        #   - This file is then cached in the previous "Cache last update date" step
 
       - name: Commit changes
-        if: steps.cache-timestamp.outputs.cache-hit != 'true' # Only commit if there are changes
-        uses: stefanzweifel/git-auto-commit-action@v4
+        if: steps.cache-timestamp.outputs.cache-hit != 'true' 
+        # ^- Only commit if there were changes (no cache hit)
+        uses: stefanzweifel/git-auto-commit-action@v4 
+        # ^- Use the auto-commit action to commit the changes
         with:
-          commit_message: 'Update device list'
-          file_pattern: output.json
+          commit_message: 'Update device list' 
+          file_pattern: output.json # Commit only the 'output.json' file 
