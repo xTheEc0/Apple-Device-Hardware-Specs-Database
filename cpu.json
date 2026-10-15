@@ -12,6 +12,16 @@
     "t6000": "Apple M1 Pro",
     "t6001": "Apple M1 Max",
     "t6002": "Apple M1 Ultra",
+    "t6020": "Apple M2 Pro",
+    "t6021": "Apple M2 Max",
+    "t6022": "Apple M2 Ultra",
+    "t6030": "Apple M3 Pro",
+    "t6031": "Apple M3 Max",
+    "t6034": "Apple M3 Max",
+    "t6032": "Apple M3 Ultra",
+    "t6040": "Apple M4 Pro",
+    "t6041": "Apple M4 Max",
+    "t6050": "Apple M5 Pro",
     "t7000": "Apple A8",
     "t7001": "Apple A8X",
     "s8000": "Apple A9 (Samsung)",
@@ -28,11 +38,21 @@
     "t8110": "Apple A15 Bionic",
     "t8112": "Apple M2",
     "t8120": "Apple A16 Bionic",
+    "t8122": "Apple M3",
     "t8130": "Apple A17 Pro",
+    "t8132": "Apple M4",
     "t8140": "Apple A18",
-    "t8150": "Apple A19"
+    "t8142": "Apple M5",
+    "t8150": "Apple A19",
+    "t8160": "Apple A20"
   },
   "ambiguousOverrides": {
+    "t8027": {
+      "iPad8,9": "Apple A12Z Bionic",
+      "iPad8,10": "Apple A12Z Bionic",
+      "iPad8,11": "Apple A12Z Bionic",
+      "iPad8,12": "Apple A12Z Bionic"
+    },
     "t8140": {
       "iPhone17,1": "Apple A18 Pro",
       "iPhone17,2": "Apple A18 Pro"
@@ -41,6 +61,18 @@
       "iPhone18,1": "Apple A19 Pro",
       "iPhone18,2": "Apple A19 Pro",
       "iPhone18,4": "Apple A19 Pro"
+    },
+    "t8160": {
+      "iPhone19,2": "Apple A20 Pro",
+      "iPhone19,3": "Apple A20 Pro",
+      "iPhone19,4": "Apple A20 Pro",
+      "iPhone19,7": "Apple A20 Pro"
+    },
+    "t6050": {
+      "Mac17,6": "Apple M5 Max",
+      "Mac17,7": "Apple M5 Max",
+      "Mac17,14": "Apple M5 Max",
+      "Mac17,15": "Apple M5 Ultra"
     }
   }
 }
